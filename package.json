@@ -1,0 +1,22 @@
+{
+  "name": "ooc",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "esbuild --bundle src/main.ts --outdir=dist --tree-shaking=false"
+  },
+  "keywords": [],
+  "author": "treejadey",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@10.23.0",
+  "devDependencies": {
+    "@biomejs/biome": "2.3.8",
+    "esbuild": "^0.27.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "purify-ts": "^2.1.2"
+  }
+}
