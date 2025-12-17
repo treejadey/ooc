@@ -191,17 +191,9 @@ const commandMain = (args: string[]): string => {
 
 	const par = utils.parseParametersFromArguments(CommandParameters, args);
 
-	if (par.success) {
-		args = par.args;
-	}
+	if (par.success) args = par.args;
 
-	let isTextOnly: boolean;
-
-	if (par.success && par.parameters.textOnly) {
-		isTextOnly = true;
-	} else {
-		isTextOnly = false;
-	}
+	const isTextOnly = par.success && !!par.parameters.textOnly;
 
 	if (args.at(0) === undefined) {
 		// If the user types "$$ooc" with no additional args then we want to return a random message

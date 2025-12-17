@@ -1,5 +1,5 @@
 "use strict";
-
+(() => {
   // node_modules/.pnpm/purify-ts@2.1.4/node_modules/purify-ts/esm/Maybe.js
   var Maybe = {
     of(value) {
@@ -1046,4 +1046,4 @@
   var main = (args) => {
     return utils.unping(commandMain(args));
   };
-
+})();
