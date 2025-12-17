@@ -66,7 +66,7 @@ const formatIndexedMessage = (msg: Message, textOnly: boolean, leftNum: number, 
 		return msg.text;
 	}
 
-	return `[${leftNum.toString()}/${rightNum.toString()}] ${msg.text}`;
+	return `[${leftNum.toString()}/${rightNum.toString()}] ${formatMessage(msg, false)}`;
 };
 
 const dataWithAddedMessage = (data: Data, text: string, adder: string): Data => {

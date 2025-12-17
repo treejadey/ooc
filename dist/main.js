@@ -1,5 +1,5 @@
 "use strict";
-(() => {
+
   // node_modules/.pnpm/purify-ts@2.1.4/node_modules/purify-ts/esm/Maybe.js
   var Maybe = {
     of(value) {
@@ -866,15 +866,8 @@
       { name: "textOnly", type: "boolean" }
     ];
     const par = utils.parseParametersFromArguments(CommandParameters, args);
-    if (par.success) {
-      args = par.args;
-    }
-    let isTextOnly;
-    if (par.success && par.parameters.textOnly) {
-      isTextOnly = true;
-    } else {
-      isTextOnly = false;
-    }
+    if (par.success) args = par.args;
+    const isTextOnly = par.success && !!par.parameters.textOnly;
     if (args.at(0) === void 0) {
       const randomMessage = getRandomMessage(data);
       return formatRandomMessage(randomMessage, isTextOnly);
@@ -1046,4 +1039,4 @@
   var main = (args) => {
     return utils.unping(commandMain(args));
   };
-})();
+
