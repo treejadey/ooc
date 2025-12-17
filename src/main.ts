@@ -219,6 +219,8 @@ const commandMain = (args: string[]): string => {
 
 			const newData = dataWithAddedMessage(data, messageText, executor);
 
+			channelCustomData.set(commandPrefix, newData);
+
 			return `Pinned the message with ID: ${newData.currentId.toString()}`;
 		}
 		case "get": {
