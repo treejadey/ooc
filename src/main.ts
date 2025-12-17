@@ -356,7 +356,7 @@ const commandMain = (args: string[]): string => {
 						return formatMessage(msg);
 					}
 
-					if (parameters.success && parameters.parameters.idx != null) {
+					if (parameters.success && parameters.parameters.index != null) {
 						const idx = parameters.parameters.index as number | 0;
 
 						if (idx > msgs.length) {

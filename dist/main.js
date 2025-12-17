@@ -996,7 +996,7 @@
               const msg = data.messages[searchMsg.index];
               return formatMessage(msg);
             }
-            if (parameters.success && parameters.parameters.idx != null) {
+            if (parameters.success && parameters.parameters.index != null) {
               const idx = parameters.parameters.index;
               if (idx > msgs.length) {
                 return "Error: You are trying to pick an index of a higher value than the amount of found items.";
@@ -1028,3 +1028,4 @@
   var main = (args) => {
     return utils.unping(commandMain(args));
   };
+
