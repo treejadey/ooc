@@ -800,11 +800,12 @@
     return right(msg[0]);
   };
   var getMaxIdInData = (data) => {
-    if (data.messages.at(data.currentId) !== void 0) {
-      return data.currentId;
-    } else {
+    const message = getMessageById(data, data.currentId);
+    if (message.isLeft()) {
       const allIds = data.messages.map((m) => m.id);
       return Math.max(...allIds);
+    } else {
+      return message.unsafeCoerce().id;
     }
   };
   var getLastMessage = (data) => {
@@ -886,6 +887,7 @@
         }
         const messageText = args.slice(1).join(" ");
         const newData = dataWithAddedMessage(data, messageText, executor);
+        channelCustomData.set(commandPrefix, newData);
         return `Pinned the message with ID: ${newData.currentId.toString()}`;
       }
       case "get": {

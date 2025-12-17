@@ -100,12 +100,14 @@ const getMessageById = (data: Data, id: number): Either<string, Message> => {
 };
 
 const getMaxIdInData = (data: Data) => {
-	if (data.messages.at(data.currentId) !== undefined) {
-		return data.currentId;
-	} else {
+	const message = getMessageById(data, data.currentId);
+
+	if (message.isLeft()) {
 		const allIds = data.messages.map((m) => m.id);
 
 		return Math.max(...allIds);
+	} else {
+		return message.unsafeCoerce().id;
 	}
 };
 
