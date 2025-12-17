@@ -757,12 +757,24 @@
   var getRandomMessage = (data) => {
     return utils.randArray(data.messages);
   };
-  var formatMessage = (msg) => {
+  var formatMessage = (msg, textOnly) => {
+    if (textOnly) {
+      return msg.text;
+    }
     const formattedDate = new Date(msg.date).toLocaleDateString("sv");
     return `(#${msg.id.toString()}) [${formattedDate}]: ${msg.text}`;
   };
-  var formatRandomMessage = (msg) => {
-    return `\u{1F3B2} ${formatMessage(msg)}`;
+  var formatRandomMessage = (msg, textOnly) => {
+    if (textOnly) {
+      return msg.text;
+    }
+    return `\u{1F3B2} ${formatMessage(msg, false)}`;
+  };
+  var formatIndexedMessage = (msg, textOnly, leftNum, rightNum) => {
+    if (textOnly) {
+      return msg.text;
+    }
+    return `[${leftNum.toString()}/${rightNum.toString()}] ${msg.text}`;
   };
   var dataWithAddedMessage = (data, text, adder) => {
     const newId = data.currentId + 1;
@@ -848,9 +860,23 @@
       throw new Error(unknownData.extract());
     }
     const data = unknownData.unsafeCoerce();
+    const CommandParameters = [
+      { name: "index", type: "number" },
+      { name: "textOnly", type: "boolean" }
+    ];
+    const par = utils.parseParametersFromArguments(CommandParameters, args);
+    if (par.success) {
+      args = par.args;
+    }
+    let isTextOnly;
+    if (par.success && par.parameters.textOnly) {
+      isTextOnly = true;
+    } else {
+      isTextOnly = false;
+    }
     if (args.at(0) === void 0) {
       const randomMessage = getRandomMessage(data);
-      return formatRandomMessage(randomMessage);
+      return formatRandomMessage(randomMessage, isTextOnly);
     }
     switch (args.at(0)) {
       case "pin":
@@ -878,7 +904,7 @@
                 return `Couldn't get last message: ${l}`;
               },
               Right: (r) => {
-                return formatMessage(r);
+                return formatMessage(r, isTextOnly);
               }
             });
             return ret;
@@ -908,7 +934,7 @@
                   return returnMessage;
                 },
                 Right: (r) => {
-                  return formatMessage(r);
+                  return formatMessage(r, isTextOnly);
                 }
               });
               return ret;
@@ -976,15 +1002,7 @@
         if (args.length === 1) {
           return "Usage: $$ooc search [text]";
         }
-        const slicedArgs = args.slice(1);
-        const parameterDefinition = [{ name: "index", type: "number" }];
-        const parameters = utils.parseParametersFromArguments(parameterDefinition, slicedArgs);
-        let messageText;
-        if (parameters.success) {
-          messageText = parameters.args.join(" ");
-        } else {
-          messageText = slicedArgs.join(" ");
-        }
+        const messageText = args.slice(1).join(" ");
         const searched = getCloseSearchResults(data, messageText);
         const ret = searched.caseOf({
           Nothing: () => {
@@ -994,10 +1012,10 @@
             if (msgs.length === 1) {
               const searchMsg = msgs[0];
               const msg = data.messages[searchMsg.index];
-              return formatMessage(msg);
+              return formatMessage(msg, isTextOnly);
             }
-            if (parameters.success && parameters.parameters.index != null) {
-              const idx = parameters.parameters.index;
+            if (par.success && par.parameters.index != null) {
+              const idx = par.parameters.index | 0;
               if (idx > msgs.length) {
                 return "Error: You are trying to pick an index of a higher value than the amount of found items.";
               } else if (idx === 0) {
@@ -1005,17 +1023,15 @@
               } else if (idx < 0) {
                 return "Error: You cannot index with a value lower than 1.";
               }
-              const msg = data.messages[idx - 1];
-              return `[${idx}/${msgs.length.toString()}] ${formatMessage(msg)}`;
+              const searchMsg = msgs[idx - 1];
+              const msg = data.messages[searchMsg.index];
+              return formatIndexedMessage(msg, isTextOnly, idx, msgs.length);
             }
             const allChoices = msgs.length - 1;
             const randomIndex = utils.random(0, allChoices);
-            const left2 = (randomIndex + 1).toString();
-            const right2 = msgs.length.toString();
-            const leftOutOfright = `[${left2}/${right2}]`;
             const randomMessage = msgs[randomIndex];
             const message = data.messages[randomMessage.index];
-            return `${leftOutOfright} ${formatMessage(message)}`;
+            return formatIndexedMessage(message, isTextOnly, randomIndex + 1, msgs.length);
           }
         });
         return ret;

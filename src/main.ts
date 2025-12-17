@@ -42,15 +42,31 @@ const getRandomMessage = (data: Data): Message => {
 	return utils.randArray(data.messages);
 };
 
-const formatMessage = (msg: Message): string => {
+const formatMessage = (msg: Message, textOnly: boolean): string => {
+	if (textOnly) {
+		return msg.text;
+	}
+
 	// HACK: Sweden uses the year-month-day format I want
 	const formattedDate = new Date(msg.date).toLocaleDateString("sv");
 
 	return `(#${msg.id.toString()}) [${formattedDate}]: ${msg.text}`;
 };
 
-const formatRandomMessage = (msg: Message): string => {
-	return `🎲 ${formatMessage(msg)}`;
+const formatRandomMessage = (msg: Message, textOnly: boolean): string => {
+	if (textOnly) {
+		return msg.text;
+	}
+
+	return `🎲 ${formatMessage(msg, false)}`;
+};
+
+const formatIndexedMessage = (msg: Message, textOnly: boolean, leftNum: number, rightNum: number) => {
+	if (textOnly) {
+		return msg.text;
+	}
+
+	return `[${leftNum.toString()}/${rightNum.toString()}] ${msg.text}`;
 };
 
 const dataWithAddedMessage = (data: Data, text: string, adder: string): Data => {
@@ -166,11 +182,30 @@ const commandMain = (args: string[]): string => {
 
 	const data = unknownData.unsafeCoerce();
 
+	const CommandParameters = [
+		{ name: "index", type: "number" },
+		{ name: "textOnly", type: "boolean" },
+	] as const;
+
+	const par = utils.parseParametersFromArguments(CommandParameters, args);
+
+	if (par.success) {
+		args = par.args;
+	}
+
+	let isTextOnly: boolean;
+
+	if (par.success && par.parameters.textOnly) {
+		isTextOnly = true;
+	} else {
+		isTextOnly = false;
+	}
+
 	if (args.at(0) === undefined) {
 		// If the user types "$$ooc" with no additional args then we want to return a random message
 		const randomMessage = getRandomMessage(data);
 
-		return formatRandomMessage(randomMessage);
+		return formatRandomMessage(randomMessage, isTextOnly);
 	}
 
 	switch (args.at(0)) {
@@ -205,7 +240,7 @@ const commandMain = (args: string[]): string => {
 							return `Couldn't get last message: ${l}`;
 						},
 						Right: (r) => {
-							return formatMessage(r);
+							return formatMessage(r, isTextOnly);
 						},
 					});
 
@@ -245,7 +280,7 @@ const commandMain = (args: string[]): string => {
 								return returnMessage;
 							},
 							Right: (r) => {
-								return formatMessage(r);
+								return formatMessage(r, isTextOnly);
 							},
 						});
 
@@ -328,18 +363,7 @@ const commandMain = (args: string[]): string => {
 				return "Usage: $$ooc search [text]";
 			}
 
-			const slicedArgs = args.slice(1);
-
-			const parameterDefinition: ParameterDefinitions = [{ name: "index", type: "number" }];
-
-			const parameters = utils.parseParametersFromArguments(parameterDefinition, slicedArgs);
-
-			let messageText: string;
-			if (parameters.success) {
-				messageText = parameters.args.join(" ");
-			} else {
-				messageText = slicedArgs.join(" ");
-			}
+			const messageText = args.slice(1).join(" ");
 
 			const searched = getCloseSearchResults(data, messageText);
 
@@ -353,11 +377,11 @@ const commandMain = (args: string[]): string => {
 
 						const msg = data.messages[searchMsg.index];
 
-						return formatMessage(msg);
+						return formatMessage(msg, isTextOnly);
 					}
 
-					if (parameters.success && parameters.parameters.index != null) {
-						const idx = parameters.parameters.index as number | 0;
+					if (par.success && par.parameters.index != null) {
+						const idx = par.parameters.index | 0;
 
 						if (idx > msgs.length) {
 							return "Error: You are trying to pick an index of a higher value than the amount of found items.";
@@ -368,24 +392,21 @@ const commandMain = (args: string[]): string => {
 						}
 
 						// Accounting for the fact that the index starts with 1
-						const msg = data.messages[idx - 1];
+						const searchMsg = msgs[idx - 1];
 
-						return `[${idx}/${msgs.length.toString()}] ${formatMessage(msg)}`;
+						const msg = data.messages[searchMsg.index];
+
+						return formatIndexedMessage(msg, isTextOnly, idx, msgs.length);
 					}
 
 					const allChoices = msgs.length - 1;
 					const randomIndex = utils.random(0, allChoices);
 
-					const left = (randomIndex + 1).toString();
-					const right = msgs.length.toString();
-
-					const leftOutOfright = `[${left}/${right}]`;
-
 					const randomMessage = msgs[randomIndex];
 
 					const message = data.messages[randomMessage.index];
 
-					return `${leftOutOfright} ${formatMessage(message)}`;
+					return formatIndexedMessage(message, isTextOnly, randomIndex + 1, msgs.length);
 				},
 			});
 

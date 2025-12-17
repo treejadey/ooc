@@ -163,15 +163,15 @@ type ParameterValueMap = {
 type ParameterType = keyof ParameterValueMap;
 type ParameterValue = ParameterValueMap[ParameterType];
 
+type StrictParamFromDefinition<T extends ParameterDefinitions> = {
+	[P in T[number] as P["name"]]: ParameterValueMap[P["type"]] | undefined;
+};
+
 type ParameterDefinition = {
 	readonly name: string;
 	readonly type: ParameterType;
 };
 type ParameterDefinitions = readonly ParameterDefinition[];
-
-// type ParamFromDefinition<T extends ParameterDefinitions> = {
-// 	[P in T[number] as P["name"]]: ParameterValueMap[P["type"]] | undefined;
-// };
 
 type ResultFailure = { success: false; reply: string };
 
@@ -220,10 +220,10 @@ declare const utils: {
 	 * Takes a string value, and parses it according to the provided type.
 	 * This is the underlying function used to parse parameters for all supibot commands.
 	 */
-	parseParametersFromArguments(
-		paramsDefinition: ParameterDefinitions,
+	parseParametersFromArguments<T extends ParameterDefinitions>(
+		paramsDefinition: T,
 		argsArray: string[],
-	): { success: true; parameters: Record<string, ParameterValue>; args: string[] } | ResultFailure;
+	): { success: true; parameters: StrictParamFromDefinition<T>; args: string[] } | ResultFailure;
 };
 
 declare const channelCustomData: {
