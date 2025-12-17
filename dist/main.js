@@ -1,6 +1,6 @@
 "use strict";
-(() => {
-  // node_modules/.pnpm/purify-ts@2.1.2/node_modules/purify-ts/esm/Maybe.js
+
+  // node_modules/.pnpm/purify-ts@2.1.4/node_modules/purify-ts/esm/Maybe.js
   var Maybe = {
     of(value) {
       return just(value);
@@ -86,7 +86,7 @@
     inspect() {
       return `Just(${this.__value})`;
     }
-    [Symbol.for("nodejs.util.inspect.custom")](_depth, opts, inspect) {
+    [/* @__PURE__ */ Symbol.for("nodejs.util.inspect.custom")](_depth, opts, inspect) {
       return `Just(${inspect(this.__value, opts)})`;
     }
     toString() {
@@ -182,7 +182,7 @@
     inspect() {
       return "Nothing";
     }
-    [Symbol.for("nodejs.util.inspect.custom")]() {
+    [/* @__PURE__ */ Symbol.for("nodejs.util.inspect.custom")]() {
       return "Nothing";
     }
     toString() {
@@ -270,7 +270,7 @@
   var just = (value) => new Just(value);
   var nothing = new Nothing();
 
-  // node_modules/.pnpm/purify-ts@2.1.2/node_modules/purify-ts/esm/Either.js
+  // node_modules/.pnpm/purify-ts@2.1.4/node_modules/purify-ts/esm/Either.js
   var Either = {
     of(value) {
       return right(value);
@@ -334,7 +334,7 @@
     inspect() {
       return `Right(${this.__value})`;
     }
-    [Symbol.for("nodejs.util.inspect.custom")](_depth, opts, inspect) {
+    [/* @__PURE__ */ Symbol.for("nodejs.util.inspect.custom")](_depth, opts, inspect) {
       return `Right(${inspect(this.__value, opts)})`;
     }
     toString() {
@@ -439,7 +439,7 @@
     inspect() {
       return `Left(${JSON.stringify(this.__value)})`;
     }
-    [Symbol.for("nodejs.util.inspect.custom")](_depth, opts, inspect) {
+    [/* @__PURE__ */ Symbol.for("nodejs.util.inspect.custom")](_depth, opts, inspect) {
       return `Left(${inspect(this.__value, opts)})`;
     }
     toString() {
@@ -533,38 +533,10 @@
   var left = (value) => new Left(value);
   var right = (value) => new Right(value);
 
-  // node_modules/.pnpm/purify-ts@2.1.2/node_modules/purify-ts/esm/Function.js
+  // node_modules/.pnpm/purify-ts@2.1.4/node_modules/purify-ts/esm/Function.js
   var identity = (x) => x;
-  var always = (x) => () => x;
-  var Order = {
-    LT: "LT",
-    EQ: "EQ",
-    GT: "GT"
-  };
-  var compare = (x, y) => {
-    if (x > y) {
-      return Order.GT;
-    } else if (x < y) {
-      return Order.LT;
-    } else {
-      return Order.EQ;
-    }
-  };
-  var orderToNumber = (order) => {
-    switch (order) {
-      case Order.LT:
-        return -1;
-      case Order.EQ:
-        return 0;
-      case Order.GT:
-        return 1;
-    }
-  };
-  var curry = (fn) => function currify(...args) {
-    return args.length >= fn.length ? fn.apply(void 0, args) : currify.bind(void 0, ...args);
-  };
 
-  // node_modules/.pnpm/purify-ts@2.1.2/node_modules/purify-ts/esm/NonEmptyList.js
+  // node_modules/.pnpm/purify-ts@2.1.4/node_modules/purify-ts/esm/NonEmptyList.js
   var NonEmptyListConstructor = (list) => list;
   var NonEmptyList = Object.assign(NonEmptyListConstructor, {
     fromArray: (source) => NonEmptyList.isNonEmpty(source) ? just(source) : nothing,
@@ -581,11 +553,10 @@
     tail: (list) => list.slice(1)
   });
 
-  // node_modules/.pnpm/purify-ts@2.1.2/node_modules/purify-ts/esm/Codec.js
+  // node_modules/.pnpm/purify-ts@2.1.4/node_modules/purify-ts/esm/Codec.js
   var serializeValue = (_, value) => {
     return typeof value === "bigint" ? value.toString() : value;
   };
-  var isEmptySchema = (schema) => Object.keys(schema).length === 0;
   var isObject = (obj) => typeof obj === "object" && obj !== null && !Array.isArray(obj);
   var reportError = (expectedType, input) => {
     let receivedString = "";
@@ -647,7 +618,7 @@
         }
         const result = {};
         for (const key of keys) {
-          if (!input.hasOwnProperty(key) && !properties[key]._isOptional) {
+          if (!Object.prototype.hasOwnProperty.call(input, key) && !properties[key]._isOptional) {
             return left(`Problem with property "${key}": it does not exist in received object ${JSON.stringify(input, serializeValue)}`);
           }
           const decodedProperty = properties[key].decode(input[key]);
@@ -715,12 +686,6 @@
     decode: (input) => input === void 0 ? right(input) : left(reportError("an undefined", input)),
     encode: identity
   });
-  var optional = (codec) => ({
-    ...oneOf([codec, undefinedType]),
-    schema: codec.schema,
-    _isOptional: true
-  });
-  var nullable = (codec) => oneOf([codec, nullType]);
   var boolean = Codec.custom({
     decode: (input) => typeof input === "boolean" ? right(input) : left(reportError("a boolean", input)),
     encode: identity,
@@ -730,43 +695,6 @@
     decode: right,
     encode: identity,
     schema: () => ({})
-  });
-  var enumeration = (e) => {
-    const enumValues = Object.values(e);
-    return Codec.custom({
-      decode: (input) => {
-        return oneOf([string, number]).decode(input).chain((x) => {
-          const enumIndex = enumValues.indexOf(x);
-          return enumIndex !== -1 ? right(enumValues[enumIndex]) : left(reportError("an enum member", input));
-        });
-      },
-      encode: identity,
-      schema: () => ({ enum: enumValues })
-    });
-  };
-  var oneOf = (codecs) => Codec.custom({
-    decode: (input) => {
-      let errors = [];
-      for (const codec of codecs) {
-        const res = codec.decode(input);
-        if (res.isRight()) {
-          return res;
-        } else {
-          errors.push(res.extract());
-        }
-      }
-      return left(`One of the following problems occured: ${errors.map((err, i) => `(${i}) ${err}`).join(", ")}`);
-    },
-    encode: (input) => {
-      for (const codec of codecs) {
-        const res = Either.encase(() => codec.encode(input)).mapLeft((_) => "").chain(codec.decode);
-        if (res.isRight()) {
-          return codec.encode(input);
-        }
-      }
-      return input;
-    },
-    schema: () => ({ oneOf: codecs.map((x) => x.schema()) })
   });
   var array = (codec) => Codec.custom({
     decode: (input) => {
@@ -796,247 +724,11 @@
     encode: identity,
     schema: number.schema
   });
-  var record = (keyCodec, valueCodec) => Codec.custom({
-    decode: (input) => {
-      const result = {};
-      const keyCodecOverride = keyCodec === number ? numberString : keyCodec;
-      if (!isObject(input)) {
-        return left(reportError("an object", input));
-      }
-      for (const key of Object.keys(input)) {
-        if (input.hasOwnProperty(key)) {
-          const decodedKey = keyCodecOverride.decode(key);
-          const decodedValue = valueCodec.decode(input[key]);
-          if (decodedKey.isRight() && decodedValue.isRight()) {
-            result[decodedKey.extract()] = decodedValue.extract();
-          } else if (decodedKey.isLeft()) {
-            return left(`Problem with key type of property "${key}": ${decodedKey.extract()}`);
-          } else if (decodedValue.isLeft()) {
-            return left(`Problem with the value of property "${key}": ${decodedValue.extract()}`);
-          }
-        }
-      }
-      return right(result);
-    },
-    encode: (input) => {
-      const result = {};
-      for (const key in input) {
-        if (input.hasOwnProperty(key)) {
-          result[keyCodec.encode(key)] = valueCodec.encode(input[key]);
-        }
-      }
-      return result;
-    },
-    schema: () => ({
-      type: "object",
-      additionalProperties: valueCodec.schema()
-    })
-  });
-  var exactly = (...expectedValues) => Codec.custom({
-    decode: (input) => expectedValues.includes(input) ? right(input) : left(reportError(expectedValues.map((x) => JSON.stringify(x)).join(", "), input)),
-    encode: identity,
-    schema: () => ({
-      oneOf: expectedValues.map((value) => ({
-        type: typeof value,
-        enum: [value]
-      }))
-    })
-  });
-  var lazy = (getCodec) => Codec.custom({
-    decode: (input) => getCodec().decode(input),
-    encode: (input) => getCodec().encode(input),
-    schema: () => ({
-      $comment: "Lazy codecs are not supported when generating a JSON schema"
-    })
-  });
-  var maybe = (codec) => {
-    const baseCodec = Codec.custom({
-      decode: (input) => Maybe.fromNullable(input).caseOf({
-        Just: (x) => codec.decode(x).map(just),
-        Nothing: () => right(nothing)
-      }),
-      encode: (input) => input.map(codec.encode).orDefault(void 0),
-      schema: () => isEmptySchema(codec.schema()) ? {} : { oneOf: [codec.schema(), { type: "null" }] }
-    });
-    return {
-      ...baseCodec,
-      _isOptional: true
-    };
-  };
-  var nonEmptyList = (codec) => {
-    const arrayCodec = array(codec);
-    return Codec.custom({
-      decode: (input) => arrayCodec.decode(input).chain((x) => NonEmptyList.fromArray(x).toEither(`Expected an array with one or more elements, but received an empty array`)),
-      encode: arrayCodec.encode,
-      schema: () => ({ ...arrayCodec.schema(), minItems: 1 })
-    });
-  };
-  var tuple = (codecs) => Codec.custom({
-    decode: (input) => {
-      if (!Array.isArray(input)) {
-        return left(reportError("an array", input));
-      } else if (codecs.length !== input.length) {
-        return left(`Expected an array of length ${codecs.length}, but received an array with length of ${input.length}`);
-      } else {
-        const result = [];
-        for (let i = 0; i < codecs.length; i++) {
-          const decoded = codecs[i].decode(input[i]);
-          if (decoded.isRight()) {
-            result.push(decoded.extract());
-          } else {
-            return left(`Problem with the value at index ${i}: ${decoded.extract()}`);
-          }
-        }
-        return right(result);
-      }
-    },
-    encode: (input) => input.map((x, i) => codecs[i].encode(x)),
-    schema: () => ({
-      type: "array",
-      items: codecs.map((x) => x.schema()),
-      additionalItems: false,
-      minItems: codecs.length,
-      maxItems: codecs.length
-    })
-  });
   var date = Codec.custom({
     decode: (input) => string.decode(input).mapLeft((err) => `Problem with date string: ${err}`).chain((x) => Number.isNaN(Date.parse(x)) ? left("Expected a valid date string, but received a string that cannot be parsed") : right(new Date(x))),
     encode: (input) => input.toISOString(),
     schema: () => ({ type: "string", format: "date-time" })
   });
-  var intersect = (t, u) => Codec.custom({
-    decode: (input) => {
-      const et = t.decode(input);
-      if (et.isLeft()) {
-        return et;
-      }
-      const eu = u.decode(input);
-      if (eu.isLeft()) {
-        return eu;
-      }
-      const valuet = et.extract();
-      const valueu = eu.extract();
-      return isObject(valuet) && isObject(valueu) ? right(Object.assign(valuet, valueu)) : right(valueu);
-    },
-    encode: (input) => {
-      const valuet = t.encode(input);
-      const valueu = u.encode(input);
-      return isObject(valuet) && isObject(valueu) ? Object.assign(valuet, valueu) : valueu;
-    },
-    schema: () => ({ allOf: [t, u].map((x) => x.schema()) })
-  });
-  var map = (keyCodec, valueCodec) => Codec.custom({
-    decode: (input) => array(tuple([keyCodec, valueCodec])).decode(input).map((pairs) => new Map(pairs)),
-    encode: (input) => Array.from(input.entries()).map(([k, v]) => [
-      keyCodec.encode(k),
-      valueCodec.encode(v)
-    ]),
-    schema: () => ({
-      type: "array",
-      items: {
-        type: "array",
-        items: [keyCodec.schema(), valueCodec.schema()],
-        additionalItems: false,
-        minItems: 2,
-        maxItems: 2
-      }
-    })
-  });
-  var oneofRegex = /^(One of the following problems occured:)\s/;
-  var oneOfCounterRegex = /\(\d\)\s/;
-  var oneOfSeparatorRegex = /\, (?=\()/g;
-  var failureRegex = /^(Expected ).+(, but received )/;
-  var failureReceivedSeparator = " with value";
-  var missingPropertyMarker = 'Problem with property "';
-  var badPropertyMarker = 'Problem with the value of property "';
-  var badPropertyKeyMarker = 'Problem with key type of property "';
-  var dateFailureMarket = "Problem with date string: ";
-  var indexMarker = "Problem with the value at index ";
-  var expectedTypesMap = {
-    "an object": "object",
-    "a number": "number",
-    "a string": "string",
-    "an undefined": "undefined",
-    "a boolean": "boolean",
-    "an array": "array",
-    "a null": "null",
-    "an enum member": "enum"
-  };
-  var receivedTypesMap = {
-    "a string": "string",
-    "a number": "number",
-    null: "null",
-    undefined: "undefined",
-    "a boolean": "boolean",
-    "an array": "array",
-    "an object": "object",
-    "a symbol": "symbol",
-    "a function": "function",
-    "a bigint": "bigint"
-  };
-  var receivedTypesWithoutValue = [
-    "null",
-    "undefined",
-    "boolean",
-    "symbol",
-    "function",
-    "bigint"
-  ];
-  var parseError = (error) => {
-    const oneOfCheck = error.match(oneofRegex);
-    if (oneOfCheck) {
-      const remainer = error.replace(oneOfCheck[0], "");
-      return {
-        type: "oneOf",
-        errors: remainer.split(oneOfSeparatorRegex).map((x) => parseError(x.replace(x.match(oneOfCounterRegex)[0], "")))
-      };
-    }
-    const failureCheck = error.match(failureRegex);
-    if (failureCheck) {
-      const receivedTypeRaw = error.split(failureCheck[2]).pop();
-      const receivedType = receivedTypesMap[receivedTypeRaw.split(failureReceivedSeparator)[0]];
-      if (receivedType) {
-        const expectedTypeRaw = error.replace(failureCheck[1], "").split(failureCheck[2])[0];
-        return {
-          type: "failure",
-          expectedType: expectedTypesMap[expectedTypeRaw],
-          receivedType,
-          receivedValue: receivedTypesWithoutValue.includes(receivedType) ? void 0 : JSON.parse(receivedTypeRaw.split(failureReceivedSeparator).pop())
-        };
-      }
-    }
-    if (error.startsWith(missingPropertyMarker)) {
-      const property = error.replace(missingPropertyMarker, "").split('": ')[0];
-      return {
-        type: "property",
-        property,
-        error: {
-          type: "failure",
-          receivedType: "undefined"
-        }
-      };
-    }
-    if (error.startsWith(badPropertyMarker) || error.startsWith(badPropertyKeyMarker)) {
-      const [property, ...restOfError] = error.replace(badPropertyMarker, "").replace(badPropertyKeyMarker, "").split(/": (.+)/);
-      return {
-        type: "property",
-        property,
-        error: parseError(restOfError.join(""))
-      };
-    }
-    if (error.startsWith(dateFailureMarket)) {
-      return parseError(error.replace(dateFailureMarket, ""));
-    }
-    if (error.startsWith(indexMarker)) {
-      const [index, ...restOfError] = error.replace(indexMarker, "").split(/: (.+)/);
-      return {
-        type: "index",
-        index: Number(index),
-        error: parseError(restOfError.join(""))
-      };
-    }
-    return { type: "custom", message: error };
-  };
 
   // src/main.ts
   var commandPrefix = "OOC_MSGS";
@@ -1284,7 +976,15 @@
         if (args.length === 1) {
           return "Usage: $$ooc search [text]";
         }
-        const messageText = args.slice(1).join(" ");
+        const slicedArgs = args.slice(1);
+        const parameterDefinition = [{ name: "index", type: "number" }];
+        const parameters = utils.parseParametersFromArguments(parameterDefinition, slicedArgs);
+        let messageText;
+        if (parameters.success) {
+          messageText = parameters.args.join(" ");
+        } else {
+          messageText = slicedArgs.join(" ");
+        }
         const searched = getCloseSearchResults(data, messageText);
         const ret = searched.caseOf({
           Nothing: () => {
@@ -1295,6 +995,18 @@
               const searchMsg = msgs[0];
               const msg = data.messages[searchMsg.index];
               return formatMessage(msg);
+            }
+            if (parameters.success && parameters.parameters.idx != null) {
+              const idx = parameters.parameters.index;
+              if (idx > msgs.length) {
+                return "Error: You are trying to pick an index of a higher value than the amount of found items.";
+              } else if (idx === 0) {
+                return "Error: You cannot pick an index of 0. The search index must be at least 1.";
+              } else if (idx < 0) {
+                return "Error: You cannot index with a value lower than 1.";
+              }
+              const msg = data.messages[idx - 1];
+              return `[${idx}/${msgs.length.toString()}] ${formatMessage(msg)}`;
             }
             const allChoices = msgs.length - 1;
             const randomIndex = utils.random(0, allChoices);
@@ -1316,4 +1028,3 @@
   var main = (args) => {
     return utils.unping(commandMain(args));
   };
-})();

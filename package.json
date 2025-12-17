@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/main.js",
   "scripts": {
-    "build": "esbuild --bundle src/main.ts --outdir=dist --tree-shaking=false"
+    "build": "esbuild --bundle src/main.ts --outdir=dist"
   },
   "keywords": [],
   "author": "treejadey",
@@ -13,10 +13,10 @@
   "packageManager": "pnpm@10.23.0",
   "devDependencies": {
     "@biomejs/biome": "2.3.8",
-    "esbuild": "^0.27.0",
+    "esbuild": "^0.27.2",
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "purify-ts": "^2.1.2"
+    "purify-ts": "^2.1.4"
   }
 }

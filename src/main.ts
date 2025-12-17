@@ -328,7 +328,18 @@ const commandMain = (args: string[]): string => {
 				return "Usage: $$ooc search [text]";
 			}
 
-			const messageText = args.slice(1).join(" ");
+			const slicedArgs = args.slice(1);
+
+			const parameterDefinition: ParameterDefinitions = [{ name: "index", type: "number" }];
+
+			const parameters = utils.parseParametersFromArguments(parameterDefinition, slicedArgs);
+
+			let messageText: string;
+			if (parameters.success) {
+				messageText = parameters.args.join(" ");
+			} else {
+				messageText = slicedArgs.join(" ");
+			}
 
 			const searched = getCloseSearchResults(data, messageText);
 
@@ -343,6 +354,23 @@ const commandMain = (args: string[]): string => {
 						const msg = data.messages[searchMsg.index];
 
 						return formatMessage(msg);
+					}
+
+					if (parameters.success && parameters.parameters.idx != null) {
+						const idx = parameters.parameters.index as number | 0;
+
+						if (idx > msgs.length) {
+							return "Error: You are trying to pick an index of a higher value than the amount of found items.";
+						} else if (idx === 0) {
+							return "Error: You cannot pick an index of 0. The search index must be at least 1.";
+						} else if (idx < 0) {
+							return "Error: You cannot index with a value lower than 1.";
+						}
+
+						// Accounting for the fact that the index starts with 1
+						const msg = data.messages[idx - 1];
+
+						return `[${idx}/${msgs.length.toString()}] ${formatMessage(msg)}`;
 					}
 
 					const allChoices = msgs.length - 1;
@@ -369,7 +397,8 @@ const commandMain = (args: string[]): string => {
 	}
 };
 
-// biome-ignore lint/correctness/noUnusedVariables: <Main is the function that will be called by Supibot.>
 const main = (args: string[]) => {
 	return utils.unping(commandMain(args));
 };
+
+export { main };
