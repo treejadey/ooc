@@ -1,5 +1,5 @@
 "use strict";
-
+(() => {
   // node_modules/.pnpm/purify-ts@2.1.4/node_modules/purify-ts/esm/Maybe.js
   var Maybe = {
     of(value) {
@@ -774,7 +774,7 @@
     if (textOnly) {
       return msg.text;
     }
-    return `[${leftNum.toString()}/${rightNum.toString()}] ${msg.text}`;
+    return `[${leftNum.toString()}/${rightNum.toString()}] ${formatMessage(msg, false)}`;
   };
   var dataWithAddedMessage = (data, text, adder) => {
     const newId = data.currentId + 1;
@@ -983,6 +983,7 @@
               Right: (msg) => {
                 const messagesWithRemovedMessage = dataWithRemovedMessage(data, msg.id);
                 if (messagesWithRemovedMessage.messages.length < data.messages.length) {
+                  channelCustomData.set(commandPrefix, messagesWithRemovedMessage);
                   return `Successfully removed message (ID: ${msg.id})`;
                 } else {
                   return `Couldn't remove last message for some reason. Please report this to ${commandOwner}`;
@@ -1039,4 +1040,4 @@
   var main = (args) => {
     return utils.unping(commandMain(args));
   };
-
+})();

@@ -343,6 +343,7 @@ const commandMain = (args: string[]): string => {
 							const messagesWithRemovedMessage = dataWithRemovedMessage(data, msg.id);
 
 							if (messagesWithRemovedMessage.messages.length < data.messages.length) {
+								channelCustomData.set(commandPrefix, messagesWithRemovedMessage)
 								return `Successfully removed message (ID: ${msg.id})`;
 							} else {
 								return `Couldn't remove last message for some reason. Please report this to ${commandOwner}`;
