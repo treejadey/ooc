@@ -170,7 +170,7 @@ const getCloseSearchResults = (data: Data, needle: string): Maybe<ClosestStringD
 const noPinnedMessages =
 	"There aren't any pinned messages yet. You should try pinning something. Like: $$ooc add [text]";
 
-const commandMain = (args: string[]): string => {
+const commandMain = async (args: string[]): Promise<string> => {
 	if (channelCustomData.get(commandPrefix) == null) {
 		initBaseOOCData();
 		return "Looks like this alias has been run for the first time. I initialized the data now. Try adding a message with $$ooc add [text]";
@@ -343,7 +343,7 @@ const commandMain = (args: string[]): string => {
 							const messagesWithRemovedMessage = dataWithRemovedMessage(data, msg.id);
 
 							if (messagesWithRemovedMessage.messages.length < data.messages.length) {
-								channelCustomData.set(commandPrefix, messagesWithRemovedMessage)
+								channelCustomData.set(commandPrefix, messagesWithRemovedMessage);
 								return `Successfully removed message (ID: ${msg.id})`;
 							} else {
 								return `Couldn't remove last message for some reason. Please report this to ${commandOwner}`;
@@ -409,14 +409,26 @@ const commandMain = (args: string[]): string => {
 
 			return ret;
 		}
+		case "website":
+		case "view":
+		case "viewAll": {
+			const res = await command.execute("hbp", JSON.stringify(data));
+
+			if (!res.success) {
+				return `Couldn't create a hastebin paste. ${res.reply}`;
+			}
+			const link = res.reply;
+
+			return `View all OOC messages here: https://ooc.treejadey.com?q=${link}`;
+		}
 		default: {
-			return "No command like this exists. Available commands are [add|remove|get|search]";
+			return "No command like this exists. Available commands are [add|remove|get|search|viewAll]";
 		}
 	}
 };
 
-const main = (args: string[]) => {
-	return utils.unping(commandMain(args));
+const main = async (args: string[]) => {
+	return utils.unping(await commandMain(args));
 };
 
 export { main };

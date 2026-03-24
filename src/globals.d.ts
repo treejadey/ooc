@@ -230,3 +230,12 @@ declare const channelCustomData: {
 	get(key: string): unknown;
 	set<T>(key: string, value: T): undefined;
 };
+
+declare const command: {
+	execute(
+		command: string,
+		...args: string[]
+	): Promise<
+		{ success: true; reason: null; reply: string } | { success: false; reason: string; reply: string }
+	>;
+};
