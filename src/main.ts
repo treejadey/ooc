@@ -419,7 +419,7 @@ const commandMain = async (args: string[]): Promise<string> => {
 			}
 			const link = res.reply;
 
-			return `View all OOC messages here: https://ooc.treejadey.com?q=${link}`;
+			return `View all OOC messages here: https://ooc.jadey.net?q=${link}`;
 		}
 		default: {
 			return "No command like this exists. Available commands are [add|remove|get|search|viewAll]";
